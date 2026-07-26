@@ -12,7 +12,7 @@ flowchart TD
     START([START]) --> parse
     parse --> critic_accuracy["critic_accuracy<br/>(GPT-4o)"]
     parse --> critic_logic["critic_logic<br/>(Claude)"]
-    parse --> critic_completeness["critic_completeness<br/>(Llama)"]
+    parse --> critic_completeness["critic_completeness<br/>(Gemini)"]
     critic_accuracy --> collect
     critic_logic --> collect
     critic_completeness --> collect
@@ -72,7 +72,7 @@ Critique(
 )
 ```
 
-`instructor` coerces every model — GPT‑4o, Claude, or Llama — into exactly this
+`instructor` coerces every model — GPT‑4o, Claude, or Gemini — into exactly this
 shape, so the pipeline is type-safe no matter which provider served the critic.
 
 ## Disagreement detection (Phase 2.3)

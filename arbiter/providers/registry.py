@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from ..config import Settings, get_settings
 from .base import Backend
-from .llm import AnthropicBackend, OllamaBackend, OpenAIBackend
+from .llm import AnthropicBackend, GeminiBackend, OllamaBackend, OpenAIBackend
 from .mock import MockBackend
 
 
@@ -14,11 +14,13 @@ def _construct(name: str, settings: Settings) -> Backend:
         return OpenAIBackend(settings.openai_model, settings.openai_api_key)
     if name == "anthropic":
         return AnthropicBackend(settings.anthropic_model, settings.anthropic_api_key)
+    if name == "gemini":
+        return GeminiBackend(settings.gemini_model, settings.google_api_key)
     if name == "ollama":
         return OllamaBackend(settings.ollama_model, settings.ollama_host)
     if name == "mock":
         return MockBackend()
-    raise ValueError(f"Unknown backend '{name}'. Valid: openai|anthropic|ollama|mock.")
+    raise ValueError(f"Unknown backend '{name}'. Valid: openai|anthropic|gemini|ollama|mock.")
 
 
 def get_backend(name: str, settings: Settings | None = None) -> Backend:
