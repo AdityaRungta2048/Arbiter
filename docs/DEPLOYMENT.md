@@ -32,9 +32,9 @@ root `requirements.txt`, `.streamlit/config.toml` theme).
 
 1. Push these files to your default branch (already done if you merged the PR).
 2. Go to <https://share.streamlit.io> and sign in with GitHub (authorise access
-   to the `New-Project` repo — public repos work out of the box).
+   to the `Arbiter` repo — public repos work out of the box).
 3. Click **Create app → Deploy a public app from GitHub** and set:
-   - **Repository:** `AdityaRungta2048/New-Project`
+   - **Repository:** `AdityaRungta2048/Arbiter`
    - **Branch:** `main`
    - **Main file path:** `ui/streamlit_app.py`
    - *(Advanced → Python version: 3.11 or newer.)*
@@ -77,7 +77,7 @@ trail in `/tmp` (ephemeral — see the note below).
 ### Option A — Vercel dashboard (no CLI)
 
 1. Go to <https://vercel.com/new> and **Import** the GitHub repo
-   `AdityaRungta2048/New-Project`.
+   `AdityaRungta2048/Arbiter`.
 2. Framework preset: **Other** (the included `vercel.json` handles the Python
    build — leave build/output settings empty).
 3. Click **Deploy**.
