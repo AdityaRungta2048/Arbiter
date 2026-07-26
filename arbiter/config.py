@@ -47,11 +47,18 @@ class Settings:
     anthropic_model: str = field(
         default_factory=lambda: _env("ARBITER_ANTHROPIC_MODEL", "claude-sonnet-5")
     )
+    gemini_model: str = field(
+        default_factory=lambda: _env("ARBITER_GEMINI_MODEL", "gemini-2.0-flash")
+    )
     ollama_model: str = field(default_factory=lambda: _env("ARBITER_OLLAMA_MODEL", "llama3.1"))
 
     # Credentials / hosts.
     openai_api_key: str = field(default_factory=lambda: _env("OPENAI_API_KEY", ""))
     anthropic_api_key: str = field(default_factory=lambda: _env("ANTHROPIC_API_KEY", ""))
+    # Accept either GOOGLE_API_KEY or GEMINI_API_KEY (both are common).
+    google_api_key: str = field(
+        default_factory=lambda: _env("GOOGLE_API_KEY", "") or _env("GEMINI_API_KEY", "")
+    )
     ollama_host: str = field(default_factory=lambda: _env("OLLAMA_HOST", "http://localhost:11434"))
 
     # Reliability.

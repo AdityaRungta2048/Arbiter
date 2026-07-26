@@ -15,7 +15,7 @@ flowchart LR
     IN([Any LLM output]) --> P[parse]
     P --> A["🎯 Accuracy Critic — GPT-4o"]
     P --> L["🧩 Logic Critic — Claude"]
-    P --> C["📋 Completeness Critic — Llama"]
+    P --> C["📋 Completeness Critic — Gemini"]
     A --> COL[collect]
     L --> COL
     C --> COL
@@ -86,5 +86,5 @@ this system measures exactly how much.**
 *Built with LangGraph (orchestration), Pydantic + `instructor` (type-safe
 structured outputs from every model), FastAPI (serving), SQLite + JSON (audit
 trail), and Streamlit (the Verdict Explorer). Runs fully offline with a
-deterministic mock backend, or against real GPT‑4o / Claude / local Llama with
-API keys.*
+deterministic mock backend, or against real GPT‑4o / Claude / Gemini with API
+keys — all cloud APIs, so it runs fully online.*

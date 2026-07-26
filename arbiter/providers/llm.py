@@ -1,4 +1,4 @@
-"""Real LLM backends: OpenAI, Anthropic, and Ollama.
+"""Real LLM backends: OpenAI, Anthropic, Google Gemini, and Ollama.
 
 All three use the `instructor` library to coerce the model into returning one of
 our Pydantic models directly (Phase 1.2 — "Use the instructor library to enforce
@@ -147,8 +147,67 @@ class AnthropicBackend(_InstructorBackend):
         )
 
 
+class GeminiBackend(_InstructorBackend):
+    """Google Gemini via the google-genai SDK. Fully cloud-hosted, so the whole
+    system can run online with no local model runtime."""
+
+    name = "gemini"
+
+    def __init__(self, model: str, api_key: str):
+        super().__init__(model)
+        self.api_key = api_key
+
+    @property
+    def available(self) -> bool:
+        if not self.api_key:
+            return False
+        # An availability probe must degrade gracefully rather than crash the
+        # pipeline. A partially-installed SDK can fail to import with native
+        # errors too — including a pyo3 PanicException, which subclasses
+        # BaseException — so catch broadly while still honouring real interrupts.
+        try:
+            import instructor  # noqa: F401
+
+            try:
+                import google.genai  # noqa: F401
+            except ImportError:
+                import google.generativeai  # noqa: F401
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except BaseException:
+            return False
+        return True
+
+    def _client(self):
+        import instructor
+
+        # Preferred: instructor's unified provider factory picks the SDK + mode.
+        try:
+            return instructor.from_provider(f"google/{self.model}", api_key=self.api_key)
+        except Exception:
+            pass
+        # Fallback: build the google-genai client explicitly.
+        from google import genai
+
+        return instructor.from_genai(genai.Client(api_key=self.api_key))
+
+    def _create(self, client, *, system, user, response_model, max_retries):
+        return client.chat.completions.create(
+            model=self.model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            response_model=response_model,
+            max_retries=max_retries,
+        )
+
+
 class OllamaBackend(_InstructorBackend):
-    """Local Llama (or any Ollama model) via its OpenAI-compatible endpoint."""
+    """Local Llama (or any Ollama model) via its OpenAI-compatible endpoint.
+
+    Optional/alternative backend — the default completeness critic now runs on
+    the cloud-hosted Gemini backend so the system needs no local runtime."""
 
     name = "ollama"
 

@@ -12,7 +12,8 @@ disagree, and has an **adjudicator** synthesise their critiques into a single
 
 The whole system runs **end-to-end offline with zero API keys** (a deterministic
 mock backend stands in for the models), and transparently upgrades to real
-GPT‑4o / Claude / local Llama when you provide credentials.
+GPT‑4o / Claude / Gemini — all cloud APIs, so it runs **fully online** — when you
+provide credentials.
 
 ---
 
@@ -27,7 +28,7 @@ flowchart LR
     IN([LLM output + optional prompt]) --> P[parse]
     P --> A["🎯 Factual Accuracy Critic<br/><i>GPT-4o</i>"]
     P --> L["🧩 Logical Consistency Critic<br/><i>Claude</i>"]
-    P --> C["📋 Completeness Critic<br/><i>local Llama</i>"]
+    P --> C["📋 Completeness Critic<br/><i>Gemini</i>"]
     A --> COL[collect]
     L --> COL
     C --> COL
@@ -52,7 +53,7 @@ the reduced confidence.
 |---|---|---|
 | Language | Python 3.11+ | Ecosystem standard |
 | Agent framework | LangGraph | State-graph orchestration with real parallel fan-out |
-| LLM providers | OpenAI + Anthropic + Ollama | Multi-provider comparison is the point |
+| LLM providers | OpenAI + Anthropic + Google Gemini | Multi-provider comparison is the point; runs fully online |
 | Structured output | Pydantic + `instructor` | Type-safe LLM outputs end to end |
 | Storage | SQLite + JSON | Full audit trail for every arbitration |
 | API | FastAPI | Production-grade serving with OpenAPI |
@@ -96,27 +97,29 @@ for issue in result.verdict.confirmed_issues:
 
 ## Using real models
 
-Routing is per-critic and env-driven. The spec's recommended routing —
-**accuracy → GPT‑4o, logic → Claude, completeness → local Llama** — is the
-default intent; in `auto` mode any critic whose backend is unavailable silently
-falls back to the mock so the pipeline always runs.
+Routing is per-critic and env-driven. The default cloud routing —
+**accuracy → GPT‑4o, logic → Claude, completeness → Gemini** — is fully online
+(no local model runtime); in `auto` mode any critic whose backend is unavailable
+silently falls back to the mock so the pipeline always runs.
 
 ```bash
 cp .env.example .env      # then edit:
 
 ARBITER_ACCURACY_BACKEND=openai       # gpt-4o
 ARBITER_LOGIC_BACKEND=anthropic       # claude
-ARBITER_COMPLETENESS_BACKEND=ollama   # local llama
+ARBITER_COMPLETENESS_BACKEND=gemini   # google gemini (fast, free tier)
 ARBITER_ADJUDICATOR_BACKEND=anthropic
 ARBITER_BACKEND_MODE=auto             # or "strict" to error on unavailable
 
 OPENAI_API_KEY=sk-...
 ANTHROPIC_API_KEY=sk-ant-...
-OLLAMA_HOST=http://localhost:11434
+GOOGLE_API_KEY=...                    # free key at aistudio.google.com
 ```
 
 Every model is constrained to emit a Pydantic model directly via `instructor`,
-so outputs are type-safe regardless of provider.
+so outputs are type-safe regardless of provider. (A local **Ollama** backend is
+still supported for the completeness critic — set `ARBITER_COMPLETENESS_BACKEND=ollama`
+— if you prefer running it offline.)
 
 ---
 
@@ -126,15 +129,15 @@ so outputs are type-safe regardless of provider.
 docker compose up --build
 ```
 
-This starts the FastAPI service (`:8000`), the Streamlit UI (`:8501`), and a
-local **Ollama** container that pulls a Llama model for the completeness critic —
-so reviewers can run the **full multi-model system without paid API keys**.
-Provide `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` in your environment to light up
-the accuracy and logic critics too.
+This starts the FastAPI service (`:8000`) and the Streamlit UI (`:8501`) — a
+**fully online** stack with no local model runtime. It runs **keyless** on the
+mock backend out of the box; provide `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` /
+`GOOGLE_API_KEY` to light up the real critics.
 
-**Hosting:** the API deploys to **Vercel** out of the box (`vercel.json` +
-`api/index.py`); the Streamlit UI and Ollama need a persistent host (Streamlit
-Cloud / Render / Railway / Fly.io). See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
+**Hosting:** because every critic is a cloud API, the whole thing deploys
+anywhere. The Streamlit UI runs free on **Streamlit Community Cloud**, and the
+API deploys to **Vercel** out of the box (`vercel.json` + `api/index.py`). See
+[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ---
 
@@ -213,7 +216,7 @@ arbiter/
   config.py          Env-driven per-critic backend routing
   prompts.py         Critic + adjudicator prompt templates
   providers/         Backend abstraction
-    llm.py             OpenAI / Anthropic / Ollama via `instructor`
+    llm.py             OpenAI / Anthropic / Gemini / Ollama via `instructor`
     mock.py            deterministic offline backend + adjudication policy
     heuristics.py      rule-based critique engine powering the mock
     registry.py        factory + auto/strict fallback
@@ -231,7 +234,7 @@ ui/
 examples/demo.py     the four canonical cases
 tests/               41 tests, fully offline
 docs/                architecture, narrative, generated sample verdicts
-docker-compose.yml   FastAPI + Streamlit + Ollama
+docker-compose.yml   FastAPI + Streamlit (fully online)
 ```
 
 See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the design deep-dive and
